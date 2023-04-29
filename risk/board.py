@@ -196,6 +196,39 @@ class Board(object):
         Returns:
             [int]: a valid path between source and target that has minimum length; this path is guaranteed to exist
         '''
+        # Check for the special case where the source and target are the same territory
+        if source == target:
+            return [source]
+
+        # Create a stack
+        stack = [source]
+
+        # Create a queue
+        queue = [stack]
+
+        # While the queue is not empty
+        while queue:
+            # Dequeue a stack from the queue
+            current_stack = queue.pop(0)
+
+            # For each territory on the board 
+            for territory in self.data:
+                # If the territory is adjacent to the top of the stack and has not been visited
+                if territory.territory_id in risk.definitions.territory_neighbors[current_stack[-1]] and territory.territory_id not in current_stack:
+                    # If this territory is the target territory
+                    if territory.territory_id == target:
+                        # You are done! The current stack plus this territory is your shortest path
+                        return current_stack + [target]
+
+                    # Make a copy of the stack
+                    new_stack = current_stack[:]
+
+                    # Push the found territory onto the copy
+                    new_stack.append(territory.territory_id)
+
+                    # Enqueue the copy if the territory has not been visited before
+                    if territory.territory_id not in sum(queue, []):   
+                        queue.append(new_stack)
 
 
     def can_fortify(self, source, target):
@@ -211,6 +244,49 @@ class Board(object):
         Returns:
             bool: True if reinforcing the target from the source territory is a valid move
         '''
+        # Check for the special case where the source and target are the same territory
+        if source == target:
+            return True
+
+        source_owner = self.owner(source)
+        target_owner = self.owner(target)
+
+        # If the source and target territories have different owners, return False
+        if source_owner != target_owner:
+            return False
+
+        # Create a stack
+        stack = [source]
+
+        # Create a queue
+        queue = [stack]
+
+        # While the queue is not empty
+        while queue:
+            # Dequeue a stack from the queue
+            current_stack = queue.pop(0)
+
+            # For each territory on the board 
+            for territory in self.data:
+                # Check if the territory is adjacent, has the same owner and has not been visited
+                if territory.territory_id in risk.definitions.territory_neighbors[current_stack[-1]] and territory.player_id == source_owner and territory.territory_id not in current_stack:
+                    # If this territory is the target territory
+                    if territory.territory_id == target:
+                        # A valid path exists, so return True
+                        return True
+
+                    # Make a copy of the stack
+                    new_stack = current_stack[:]
+
+                    # Push the found territory onto the copy
+                    new_stack.append(territory.territory_id)
+
+                    # Enqueue the copy if the territory has not been visited before
+                    if territory.territory_id not in sum(queue, []):
+                        queue.append(new_stack)
+
+        # If the loop finishes, no valid path exists between source and target for the same player, so return False
+        return False
 
 
     def cheapest_attack_path(self, source, target):
