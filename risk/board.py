@@ -302,6 +302,38 @@ class Board(object):
         Returns:
             [int]: a list of territory_ids representing the valid attack path; if no path exists, then it returns None instead
         '''
+        import heapdict
+        import copy
+        ter = set()
+        ter.add(source)
+        beg = dict()
+        beg[source] = [source]
+        que = heapdict.heapdict()
+        que[source] = 0
+        while que:
+            if self.owner(source) == self.owner(target):
+                return None
+            cur, y = que.peekitem()
+            que.pop(cur)
+            if target == cur:
+                return beg[cur]
+            for x in list(risk.definitions.territory_neighbors[cur]):
+                if self.owner(source) == self.owner(x):
+                    pass
+                elif x in ter:
+                    pass
+                else:
+                    another = copy.deepcopy(beg[cur])
+                    another.append(x)
+                    path = y + self.armies(x)
+                    if x not in que:
+                        beg[x] = another
+                        que[x] = path
+                    elif que[x] > path:
+                        beg[x] = another
+                        que[x] = path
+            ter.add(cur)
+        return None
 
 
     def can_attack(self, source, target):
@@ -313,6 +345,10 @@ class Board(object):
         Returns:
             bool: True if a valid attack path exists between source and target; else False
         '''
+        path = self.cheapest_attack_path(source, target)
+        if path is None:
+            return False
+        return self.is_valid_attack_path(path)
 
 
     # ======================= #
